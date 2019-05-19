@@ -1,0 +1,19 @@
+
+
+.segment, 0, 0, .data
+.int, 0, 1, a
+.int, 0, 1, b
+
+
+.segment, 0, 0, .text
+# Start READ statement ---
+syscall, 1, T0, 0
+sw, T0, 0, a
+# Start ASSIGN statement ---
+lw, a, 0, T1
+li, 2, 0, T2
+mul, T1, T2, T3
+sw, T3, 0, b
+# Start PRINT statement ---
+lw, b, 0, T4
+syscall, 2, T4, 0

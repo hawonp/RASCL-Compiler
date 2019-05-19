@@ -1,0 +1,106 @@
+
+
+.segment, 0, 0, .data
+.float, 0, 10, g
+.int, 0, 1, a
+.int, 0, 1, b
+.int, 0, 1, c
+.int, 0, 10, d
+
+
+.segment, 0, 0, .text
+# Start ASSIGN statement ---
+li, 5, 0, T0
+sw, T0, 0, a
+# Start ASSIGN statement ---
+lw, a, 0, T1
+sl, T1, 2, T1
+la, d, 0, T2
+add, T1, T2, T3
+li, 5, 0, T5
+sw, T5, 0, T3
+# Start ASSIGN statement ---
+li, 20, 0, T6
+la, d, 0, T7
+add, T6, T7, T8
+lw, T8, 0, T9
+sw, T9, 0, b
+# Start ASSIGN statement ---
+li, 1, 0, T10
+sw, T10, 0, b
+# Start ASSIGN statement ---
+li, 0, 0, T11
+sw, T11, 0, a
+# Start ASSIGN statement ---
+li, 0, 0, T12
+sw, T12, 0, c
+# Start WHILE statement ---
+.label, 0, 0, L2
+li, 5, 0, T14
+blt, T13, T14, L1
+j, 0, 0, L0
+.label, 0, 0, L1
+# Start WHILE statement ---
+.label, 0, 0, L5
+li, 10, 0, T16
+blt, T15, T16, L4
+j, 0, 0, L3
+.label, 0, 0, L4
+# Start ASSIGN statement ---
+lw, c, 0, T17
+sl, T17, 2, T17
+la, g, 0, T18
+add, T17, T18, T19
+li, 1.0, 0, FT1
+lw, a, 0, T20
+fmul, FT1, FT3, FT2
+lw, c, 0, T21
+fmul, FT2, FT5, FT4
+sw, FT4, 0, T19
+.label, 0, 0, L3
+.label, 0, 0, L0
+# Start if statement ---
+beq, T22, T23, L8
+j, 0, 0, L7
+# Start if statement THEN part ---
+.label, 0, 0, L8
+# Start ASSIGN statement ---
+lw, a, 0, T24
+sl, T24, 2, T24
+la, d, 0, T25
+add, T24, T25, T26
+li, 5, 0, T28
+sw, T28, 0, T26
+# Start ASSIGN statement ---
+lw, a, 0, T29
+lw, b, 0, T30
+li, 0, 0, T31
+sub, T31, T30, T32
+add, T29, T32, T33
+sw, T33, 0, c
+# Start if statement ELSE part ---
+.label, 0, 0, L7
+# Start WHILE statement ---
+.label, 0, 0, L11
+li, 5, 0, T35
+blt, T34, T35, L10
+j, 0, 0, L9
+.label, 0, 0, L10
+# Start ASSIGN statement ---
+lw, a, 0, T36
+li, 0, 0, T37
+sub, T37, T36, T38
+lw, b, 0, T39
+mul, T38, T39, T40
+sw, T40, 0, c
+# Start ASSIGN statement ---
+lw, b, 0, T41
+li, 1, 0, T42
+add, T41, T42, T43
+sw, T43, 0, b
+.label, 0, 0, L9
+j, 0, 0, L6
+.label, 0, 0, L6
+# Start PRINT statement ---
+lw, c, 0, T44
+syscall, 2, T44, 0
