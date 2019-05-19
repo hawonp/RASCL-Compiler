@@ -6,26 +6,23 @@
     This 'TestParser.java' program takes in a file by command line arguement and
     parses the token stream generated from the file
 */
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
+package Parser;
+
 import java.io.IOException;
 
 public class TestParser {
 
     public static void main(String [] args){
 
-        //command line input
-        String inputFile = args[0];
-        System.out.println("Command Line Arguement is: " + inputFile);
+//        //command line input
+//        String inputFile = args[0];
+//        System.out.println("Command Line Arguement is: " + inputFile);
+//
+//        //try to parse file and print output to a textfile
+        String path = "C:\\Users\\hawon\\IdeaProjects\\CodeGeneration\\src\\Testing\\basic_rascl_tests";        String inputFile = path + "\\T00_rascl_test_exprs1.rsc";
 
-        //try to parse file and print output to a textfile
         System.out.println("\nSTART PARSING: " + inputFile);
-        try {
-            Parser p = new Parser(inputFile);
-        } catch (IOException e) {
-            System.out.println("ERROR: Could not make output file!");
-        }
+        Parser p = new Parser(inputFile);
 
         System.out.println("\nPROGRAM COMPLETE!");
 

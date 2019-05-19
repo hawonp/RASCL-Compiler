@@ -1,3 +1,4 @@
+package Parser;
 /*
     Author: Hawon Park
     SBUID: 110983842
@@ -25,32 +26,37 @@ public class Parser {
     private String output;                          //temporary string to store output
 
     //constructor
-    public Parser(String fileName) throws IOException {
+    public Parser(String fileName){
         //initialize instance variables and token buffer
         lookahead = 0;
         tokenBuffer = buildLexer(fileName);
         output = "";
-        String file = "";
+//        String file = "";
 
-        //IF: command line input is file within the same directory, no need to strip excess path
-        if(fileName.lastIndexOf("/") == -1)
-          file = fileName + "_OUTPUT.txt";
-        //ELSE: get only filename
-        else
-          file = fileName.substring(fileName.lastIndexOf("/") )+ "_OUTPUT.txt";
+//        //IF: command line input is file within the same directory, no need to strip excess path
+//        if(fileName.lastIndexOf("/") == -1)
+//          file = fileName + "_OUTPUT.txt";
+//        //ELSE: get only filename
+//        else
+//          file = fileName.substring(fileName.lastIndexOf("/") )+ "_OUTPUT.txt";
 
-        BufferedWriter writer = new BufferedWriter(new FileWriter("./output/" +file));
+//        BufferedWriter writer = new BufferedWriter(new FileWriter("./output/" +file));
 
         //Call program() to start the parser
         System.out.println("\t-(Parser) Start looking through productions");
         program();
         System.out.println("\t-(Parser) Finished parsing token stream");
 
-        //write output text to file and close bufferedwriter
-        System.out.println("\t-(Parser) Write to output file");
-        writer.append(output);
-        writer.close();
+//        //write output text to file and close bufferedwriter
+//        System.out.println("\t-(Parser) Write to output file");
+//        writer.append(output);
+//        writer.close();
     }
+
+    public String getOutput(){
+        return output;
+    }
+
 
     //method used to generate token stream
     private ArrayList<tokenInfo> buildLexer(String fileName){
