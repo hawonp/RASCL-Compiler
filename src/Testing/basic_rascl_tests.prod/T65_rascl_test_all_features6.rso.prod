@@ -1,0 +1,125 @@
+program -> decllist bstatementlist DD
+decllist -> decl decllist
+decl -> typespec variablelist
+typespec -> FLOAT
+variablelist -> variable variablelisttail
+variable -> ID variabletail
+variabletail -> e
+variablelisttail -> SEMICOLON
+decllist -> decl decllist
+decl -> typespec variablelist
+typespec -> FLOAT
+variablelist -> variable variablelisttail
+variable -> ID variabletail
+variabletail -> e
+variablelisttail -> SEMICOLON
+decllist -> decl decllist
+decl -> typespec variablelist
+typespec -> INT
+variablelist -> variable variablelisttail
+variable -> ID variabletail
+variabletail -> e
+variablelisttail -> SEMICOLON
+decllist -> decl decllist
+decl -> typespec variablelist
+typespec -> FLOAT
+variablelist -> variable variablelisttail
+variable -> ID variabletail
+variabletail -> e
+variablelisttail -> SEMICOLON
+decllist -> e
+bstatementlist -> LBRACE statementlist RBRACE
+statementlist -> statement SEMICOLON statementlist
+statement -> assignmentexpression
+assignmentexpression -> variable ASSIGN otherexpression
+variable -> ID variabletail
+variabletail -> e
+otherexpression -> term otherexpressiontail
+term -> factor termtail 
+factor -> FCONST
+termtail -> e
+otherexpressiontail -> e
+statementlist -> statement SEMICOLON statementlist
+statement -> assignmentexpression
+assignmentexpression -> variable ASSIGN otherexpression
+variable -> ID variabletail
+variabletail -> e
+otherexpression -> term otherexpressiontail
+term -> factor termtail 
+factor -> FCONST
+termtail -> e
+otherexpressiontail -> e
+statementlist -> statement SEMICOLON statementlist
+statement -> assignmentexpression
+assignmentexpression -> variable ASSIGN otherexpression
+variable -> ID variabletail
+variabletail -> e
+otherexpression -> term otherexpressiontail
+term -> factor termtail 
+factor -> ICONST
+termtail -> e
+otherexpressiontail -> e
+statementlist -> statement SEMICOLON statementlist
+statement -> assignmentexpression
+assignmentexpression -> variable ASSIGN otherexpression
+variable -> ID variabletail
+variabletail -> e
+otherexpression -> term otherexpressiontail
+term -> factor termtail 
+factor -> variable
+variable -> ID variabletail
+variabletail -> e
+termtail -> MULT factor termtail
+   or
+termtail -> DIV factor termtail
+factor -> LPAREN otherexpression RPAREN 
+otherexpression -> term otherexpressiontail
+term -> factor termtail 
+factor -> LPAREN otherexpression RPAREN 
+otherexpression -> term otherexpressiontail
+term -> factor termtail 
+factor -> ICONST
+termtail -> e
+otherexpressiontail -> PLUS term otherexpressiontail
+   or
+otherexpressiontail -> MINUS term otherexpressiontail
+term -> factor termtail 
+factor -> variable
+variable -> ID variabletail
+variabletail -> e
+termtail -> e
+otherexpressiontail -> e
+termtail -> MULT factor termtail
+   or
+termtail -> DIV factor termtail
+factor -> LPAREN otherexpression RPAREN 
+otherexpression -> term otherexpressiontail
+term -> factor termtail 
+factor -> ICONST
+termtail -> e
+otherexpressiontail -> PLUS term otherexpressiontail
+   or
+otherexpressiontail -> MINUS term otherexpressiontail
+term -> factor termtail 
+factor -> variable
+variable -> ID variabletail
+variabletail -> e
+termtail -> e
+otherexpressiontail -> e
+termtail -> e
+otherexpressiontail -> PLUS term otherexpressiontail
+   or
+otherexpressiontail -> MINUS term otherexpressiontail
+term -> factor termtail 
+factor -> ICONST
+termtail -> e
+otherexpressiontail -> e
+termtail -> e
+otherexpressiontail -> e
+statementlist -> statement SEMICOLON statementlist
+statement -> printexpression
+printexpression -> PRINT variable
+variable -> ID variabletail
+variabletail -> e
+statementlist -> e
+Done
