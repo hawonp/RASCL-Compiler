@@ -21,6 +21,7 @@ j, 0, 0, L0
 # Start ASSIGN statement ---
 lw, a, 0, FT1
 lw, b, 0, T3
+toFloat, T3, 0, FT3
 fmul, FT1, FT3, FT2
 sw, FT2, 0, c
 # Start ASSIGN statement ---

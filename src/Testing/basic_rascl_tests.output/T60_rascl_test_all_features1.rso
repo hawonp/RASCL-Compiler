@@ -47,6 +47,7 @@ lw, a, 0, FT5
 li, 0.0, 0, FT6
 fsub, FT6, FT5, FT7
 lw, b, 0, T12
+toFloat, T12, 0, FT9
 fmul, FT7, FT9, FT8
 sw, FT8, 0, c
 # Start ASSIGN statement ---

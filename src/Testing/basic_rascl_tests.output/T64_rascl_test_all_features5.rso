@@ -53,8 +53,10 @@ la, g, 0, T18
 add, T17, T18, T19
 li, 1.0, 0, FT1
 lw, a, 0, T20
+toFloat, T20, 0, FT3
 fmul, FT1, FT3, FT2
 lw, c, 0, T21
+toFloat, T21, 0, FT5
 fmul, FT2, FT5, FT4
 sw, FT4, 0, T19
 .label, 0, 0, L3
