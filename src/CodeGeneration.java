@@ -1,25 +1,41 @@
-import Lexer.*;
-import Table.*;
+/*
+    Author: Hawon Park
+    SBUID: 110983842
+    Email: hawon.park@stonybrook.edu
 
+    This "Parser.java" file takes an input file and
+        1) Generates a list of tokens using a lexical analyzer
+        2) Parses through the token list
+        3) Prints out the production output into a file
+
+    Parser will only parse RASCL files!
+ */
+
+import Lexer.*;
+import Table.SymbolTable;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class CodeGen {
+public class CodeGeneration {
 
+    //instance variables
     private ArrayList<tokenInfo> tokenBuffer;
     private SymbolTable st;
     private int lookahead;
     private String output;
     private String inter_code;
     private int reg_num;
+    private int float_num;
+    private int label_num;
 
-
-    public CodeGen(String fileName) throws IOException {
+    //constructor
+    public CodeGeneration(String fileName) throws IOException{
         //initialize instance variables and token buffer
         lookahead = 0;
         output = "";
         inter_code = "";
         reg_num = 0;
+        float_num = 1;
 
         System.out.println("(1) Get Token Buffer from Lexer");
         tokenBuffer = buildLexer(fileName);
@@ -40,10 +56,10 @@ public class CodeGen {
         Lexer lex = new Lexer();
         int check = lex.initLexer(fileName);
 
-        //if lexical analyzer successfully opens file, build token buffer
+        //if lexical analxyzer successfully opens file, build token buffer
 //        System.out.println("\t-(Parser) init Lexer with input file wew:" + check);
         if(check == 1) {
-            System.out.println("\t-(Parser) build token buffer");
+//            System.out.println("\t-(Parser) build token buffer");
             lex.buildBuffer();
             return lex.getResult();
         }
@@ -61,11 +77,9 @@ public class CodeGen {
     private void program(){
         output+="program -> decllist bstatementlist DD\n";
 
-        System.out.println("\tGet Declaration List & Build Symbol Table");
         inter_code+=".segment, 0, 0, .data\n";
         decllist();
 
-        System.out.println("\tGet B-Statement List");
         inter_code+="\n\n.segment, 0, 0, .text\n";
         bstatementlist();
 
@@ -81,14 +95,9 @@ public class CodeGen {
         String curr = tokenBuffer.get(lookahead).getTokenType().toString();
 
         //"peer" into typespec production to decide between epsilon production and normal production
-        if(curr.equals("INT")){
+        if(curr.equals("INT") || curr.equals("FLOAT")){
             output+="decllist -> decl decllist\n";
-            decl("int");
-            decllist();
-        }
-        else if (curr.equals("FLOAT")){
-            output+="decllist -> decl decllist\n";
-            decl("float");
+            decl(curr, true);
             decllist();
         }
         else {
@@ -101,7 +110,6 @@ public class CodeGen {
         lookahead++;
         statementlist();
         lookahead++;
-
     }
 
     private void statementlist(){
@@ -122,7 +130,7 @@ public class CodeGen {
         //use tokens to decide which production rule to call
         if(curr.equals("WHILE") || curr.equals("IF") || next.equals("ASSIGN") || curr.equals("PRINT") || curr.equals("READ")){
             output+="statementlist -> statement SEMICOLON statementlist\n";
-            statement();
+            statement(false);
             lookahead++;
             statementlist();
         }
@@ -130,8 +138,9 @@ public class CodeGen {
         else if(next.equals("LBRACKET") && threeTokenAfter.equals("RBRACKET") && fourTokenAfter.equals("ASSIGN")){
             output+="statementlist -> statement SEMICOLON statementlist\n";
             output+="statement -> assignmentexpression\n";
-
             //skip calling statement() and go directly to assignmentexpression()
+
+            //declare that code is starting an assignment statement
             inter_code += "# Start ASSIGN statement ---\n";
             assignmentexpression(true);
             lookahead++;
@@ -142,26 +151,26 @@ public class CodeGen {
         }
     }
 
-    private void decl(String type){
+    private void decl(String type, boolean isdecllist){
         output+="decl -> typespec variablelist\n";
         typespec();
-        variablelist(type, true);
+        variablelist(type, isdecllist);
     }
 
-    private void variablelist(String type, boolean decllist){
+    private void variablelist(String type, boolean isdecllist){
         output+="variablelist -> variable variablelisttail\n";
-        variable(type, decllist);
-        variablelisttail(type, decllist);
+        variable(type, isdecllist);
+        variablelisttail(type, isdecllist);
     }
 
-    private void variablelisttail(String type, boolean decllist){
+    private void variablelisttail(String type, boolean isdecllist){
         String curr = tokenBuffer.get(lookahead).getTokenType().toString();
 
         if(curr.equals("COMMA")){
             output+="variablelisttail -> COMMA variable variablelisttail\n";
             lookahead++;
-            variable(type, decllist);
-            variablelisttail(type, decllist);
+            variable(type, isdecllist);
+            variablelisttail(type, isdecllist);
         }
         else{
             output+="variablelisttail -> SEMICOLON\n";
@@ -181,221 +190,244 @@ public class CodeGen {
         lookahead ++;
     }
 
-    private void variable(String type, boolean decllist){
+    private void variable(String type, boolean isdecllist){
         output+="variable -> ID variabletail\n";
-        tokenInfo temp = tokenBuffer.get(lookahead);
 
-        //add symbol to symbol table
-        st.addSymbol(temp.getTokenText());
-
+        st.addSymbol(tokenBuffer.get(lookahead).getTokenText());
         lookahead++;
-        variabletail(type, temp.getTokenText(), decllist);
+        variabletail(type, isdecllist);
 
     }
 
-    private void variabletail(String type, String text, boolean decllist) {
+    private void variabletail(String type, boolean isdecllist) {
         String curr = tokenBuffer.get(lookahead).getTokenType().toString();
+        String text = tokenBuffer.get(lookahead-1).getTokenText();
 
-        //array declaration
         if (curr.equals("LBRACKET")) {
             output += "variabletail -> arraydim\n";
-            arraydim(type, text, decllist);
-        }
-        //primitive type declaration
-        else {
-            if(decllist){
-                inter_code+="." + type + ", 0, 1, " + text + "\n";
-                st.addAttributeToSymbol(text, 2, type);
+            arraydim(type, isdecllist);
+
+            if(!isdecllist){
+                reg_num++;
             } else {
-//                inter_code+="lw, " + text+ ", 0, T" + reg_num+ "\n";
+                if(type.toLowerCase().equals("float")){
+                    st.addFloatArr(text);
+                } else {
+                    st.addIntArr(text);
+                }
             }
 
+        }
+        else {
             output+="variabletail -> e\n";
+
+            if(isdecllist){
+                inter_code+="." + type.toLowerCase() + ", 0, 1, " + text + "\n";
+                st.addAttributeToSymbol(text, 2, type);
+            }
         }
     }
 
-    private void arraydim(String type, String text, boolean decllist){
+    private void arraydim(String type, boolean isdecllist){
         output+="arraydim -> LBRACKET arraydimtail\n";
         lookahead++;
-        arraydimtail(type, text, decllist);
+        arraydimtail(type, isdecllist);
     }
 
-    private void arraydimtail(String type, String text, boolean decllist) {
+    private void arraydimtail(String type, boolean isdecllist) {
         String curr = tokenBuffer.get(lookahead).getTokenType().toString();
-        String num = tokenBuffer.get(lookahead).getTokenText();
+        String text = tokenBuffer.get(lookahead).getTokenText();
 
         if (curr.equals("ID")) {
             output+="arraydimtail -> ID RBRACKET\n";
-            inter_code += "lw, " + num + ", 0, T" + (reg_num) + "\n";
+
+            inter_code += "lw, " + text + ", 0, T" + (reg_num) + "\n";
             inter_code += "sl, T" + reg_num + ", 2, T" + (reg_num++) + "\n";
             inter_code += "la, arr, 0, T" + (reg_num++) + "\n";
             inter_code += "add, T" + (reg_num-2) + ", T" + (reg_num-1) + ", T" + (reg_num) + "\n";
             reg_num++;
+
         }
         else{
-//            TODO confirm that you put array for array types int symbol table
-            if(decllist){
-                st.addAttributeToSymbol(text, 2, "array");
-                inter_code += "." + type + ", 0, " + num + ", " + text + "\n";
-            } else {
-                String temp = tokenBuffer.get(lookahead-2).getTokenText();
+            output+="arraydimtail -> ICONST RBRACKET\n";
 
+            //runs only during declaration stage
+            if(isdecllist){
+                String temp = tokenBuffer.get(lookahead-2).getTokenText();
+                inter_code += "." + type.toLowerCase() + ", 0, " + text + ", " + temp + "\n";
+            }
+            // run during definition stage
+            else {
+                String temp = tokenBuffer.get(lookahead-2).getTokenText();
                 int x = Integer.parseInt(tokenBuffer.get(lookahead).getTokenText());
                 inter_code += "li, " + (x *4) + ", 0, T" + (reg_num++) + "\n";
                 inter_code += "la, " + temp + ", 0, T" + (reg_num++) + "\n";
                 inter_code += "add, T" + (reg_num-2) + ", T" + (reg_num-1) + ", T" + (reg_num) + "\n";
                 reg_num++;
-            }
 
-            output+="arraydimtail -> ICONST RBRACKET\n";
+            }
         }
         lookahead+=2;
     }
 
-    private void statement(){
+    private void statement(boolean isarray){
         //get current token which would work for WHILE, IF, PRINT, READ statements
         //get next token which is requirement for assignment operators
         String curr = tokenBuffer.get(lookahead).getTokenType().toString();
         String next = tokenBuffer.get(lookahead+1).getTokenType().toString();
 
         if(curr.equals("WHILE")) {
-            inter_code += "# Start WHILE statement ---\n";
             output+="statement -> whilestatement\n";
+
+            inter_code += "# Start WHILE statement ---\n";
             whilestatement();
         }
         else if(curr.equals("IF")) {
-            inter_code += "# Start iF statement ---\n";
             output+="statement -> ifstatement\n";
+
+            inter_code += "# Start if statement ---\n";
             ifstatement();
         }
         else if(next.equals("ASSIGN")) {
-            inter_code += "# Start ASSIGN statement ---\n";
             output+="statement -> assignmentexpression\n";
-            assignmentexpression(false);
+
+            inter_code += "# Start ASSIGN statement ---\n";
+            assignmentexpression(isarray);
         }
         else if(curr.equals("PRINT")) {
-            inter_code += "# Start PRINT statement ---\n";
             output+="statement -> printexpression\n";
+
+            inter_code += "# Start PRINT statement ---\n";
             printexpression();
         }
         else {
-            inter_code += "# Start READ statement ---\n";
             output+="statement -> readstatement\n";
+
+            inter_code += "# Start READ statement ---\n";
             readstatement();
         }
     }
 
-//    TODO
-    private void assignmentexpression(boolean array){
-        output+="assignmentexpression -> variable ASSIGN otherexpression\n";
-        String term = tokenBuffer.get(lookahead).getTokenText();
-
+    private void assignmentexpression(boolean isarray){
+        String text = tokenBuffer.get(lookahead).getTokenText();
         int tempReg = reg_num;
 
-        variable(term, false);
-        String temp = term;
+        output+="assignmentexpression -> variable ASSIGN otherexpression\n";
+        variable("", false);
         lookahead++;
-        otherexpression(array);
+        otherexpression();
 
-//        TODO SW for arrays
-        if(array){
-            inter_code += "sw, " + "T" + (reg_num - 1) + ", 0, T" + (tempReg+2) + "\n";
+        if(isarray){
+            if(st.isFloat(text)){
+//                inter_code += "toFloat, T" + (reg_num-1) + ", 0, FT" + (float_num) + "\n";
+                inter_code += "sw, " + "FT" + float_num + ", 0, T" + (tempReg+2) + "\n";
+//                float_num++;
+            } else {
+                inter_code += "sw, " + "T" + (reg_num - 1) + ", 0, T" + (tempReg+2) + "\n";
+            }
         } else {
-            inter_code += "sw, " + "T" + (reg_num - 1) + ", 0, " + term + "\n";
+            if(st.isFloat(text)){
+//                inter_code += "toFloat, T" + (reg_num-1) + ", 0, FT" + (float_num) + "\n";
+                inter_code += "sw, " + "FT" + (float_num) + ", 0, " + text + "\n";
+//                float_num++;
+            } else {
+                inter_code += "sw, " + "T" + (reg_num - 1) + ", 0, " + text + "\n";
+            }
         }
     }
 
-//    TODO
     private void printexpression(){
+        String text = tokenBuffer.get(lookahead+1).getTokenText();
+        int temp = reg_num;
+
         output+="printexpression -> PRINT variable\n";
         lookahead++;
+        variable("", false);
 
-        int temp = reg_num;
-        variable("Placeholder", false);
+        String prev = tokenBuffer.get(lookahead-1).getTokenText();
+        if(prev.equals("]")){
+            inter_code += "lw, T" + (reg_num-2)+ ", 0, T" + (reg_num-1) + "\n";
+            inter_code += "syscall, 2, T" + (reg_num-1) + ", 0\n";
 
-        String text = tokenBuffer.get(lookahead-1).getTokenText();
-
-//        inter_code += "lw, " + text+ ", 0, T" + (temp) + "\n";
-//        reg_num++;
-        inter_code += "syscall, 2, T" + (temp) + ", 0\n";
-
+        } else {
+            inter_code += "lw, " + text+ ", 0, T" + (temp) + "\n";
+            inter_code += "syscall, 2, T" + (temp) + ", 0\n";
+        }
     }
 
-    private void otherexpression(boolean array){
+    private void otherexpression(){
         output+="otherexpression -> term otherexpressiontail\n";
-        term(array);
-        otherexpressiontail(array);
+        term();
+        otherexpressiontail();
     }
 
-    private void otherexpressiontail(boolean array){
+    private void otherexpressiontail(){
         String curr = tokenBuffer.get(lookahead).getTokenType().toString();
 
         if(curr.equals("PLUS")){
             output+="otherexpressiontail -> PLUS term otherexpressiontail\n";
             lookahead++;
 
-            int temp = reg_num -1;
-            term(array);
+            int temp = reg_num - 1;
+            term();
             inter_code += "add, T" + temp + ", T" + (reg_num-1) + ", T" + (reg_num++) + "\n";
-            otherexpressiontail(array);
+
+            otherexpressiontail();
         } else if(curr.equals("MINUS")){
             output+="otherexpressiontail -> MINUS term otherexpressiontail\n";
             lookahead++;
-            int temp = reg_num -1;
-            term(array);
+
+            int temp = reg_num - 1;
+            term();
             inter_code += "sub, T" + temp + ", T" + (reg_num-1) + ", T" + (reg_num++) + "\n";
-            otherexpressiontail(array);
+
+            otherexpressiontail();
         }
         else {
             output+="otherexpressiontail -> e\n";
         }
     }
 
-    private void term(boolean array){
+    private void term(){
         output+="term -> factor termtail\n";
-        factor(array);
-        termtail(array);
+        factor();
+        termtail();
     }
 
-    private void termtail(boolean array){
+    private void termtail(){
         String curr = tokenBuffer.get(lookahead).getTokenType().toString();
 
         if(curr.equals("MULT")){
-
             output+="termtail -> MULT factor termtail\n";
             lookahead++;
+
             int temp = reg_num -1;
-            factor(array);
+            factor();
             inter_code += "mul, T" + temp + ", T" + (reg_num-1) + ", T" + (reg_num++) + "\n";
-            termtail(array);
+            termtail();
         } else if(curr.equals("DIV")){
             output+="termtail -> DIV factor termtail\n";
-
             lookahead++;
+
             int temp = reg_num -1;
-            factor(array);
+            factor();
             inter_code += "div, T" + temp + ", T" + (reg_num-1) + ", T" + (reg_num++) + "\n";
-            termtail(array);
+            termtail();
         }
         else {
             output+="termtail -> e\n";
         }
     }
 
-    private void factor(boolean array){
+    private void factor(){
         String curr = tokenBuffer.get(lookahead).getTokenType().toString();
         String text = tokenBuffer.get(lookahead).getTokenText();
 
-        //noinspection IfCanBeSwitch
         if(curr.equals("ICONST")){
             output+="factor -> ICONST\n";
             lookahead++;
 
-//            TODO figure out why professor incrememted here
-
-            if(array)
-                reg_num++;
-
+//            TODO PROFESSOR INCREMENETS BY ONE MORE IF ARRAY
             if(text.charAt(0) == '-'){
                 inter_code += "li, " + text.substring(1) + ", 0, T" +reg_num + "\n";
             } else {
@@ -404,8 +436,6 @@ public class CodeGen {
             reg_num++;
         }
         else if(curr.equals("FCONST")){
-
-            System.out.println(curr + " " + text);
             output+="factor -> FCONST\n";
             lookahead++;
 
@@ -413,15 +443,16 @@ public class CodeGen {
             reg_num++;
         }
         else if(curr.equals("LPAREN")){
+            //todo unsure about this shit
             output+="factor -> LPAREN otherexpression RPAREN\n";
             lookahead++;
-            otherexpression(array);
+            otherexpression();
             lookahead++;
         }
         else if(curr.equals("MINUS")){
             output+="factor -> MINUS factor\n";
             lookahead++;
-            factor(array);
+            factor();
 
             inter_code += "li, 0, 0, T" +reg_num + "\n";
             inter_code += "sub, T" + reg_num + ", T" + (reg_num-1) + ", T" + (reg_num+1) + "\n";
@@ -429,20 +460,34 @@ public class CodeGen {
         }
         else{
             output+="factor -> variable\n";
-            variable(text, false);
+            int temp = reg_num;
 
-            inter_code += "lw, T" + (reg_num-1) + ", 0, T" +reg_num + "\n";
-            reg_num += 1;
+            variable("", false);
+
+            String prev = tokenBuffer.get(lookahead-1).getTokenText();
+
+            if(prev.equals("]")){
+                inter_code += "lw, T" + (reg_num-2) + ", 0, T" + (reg_num-1) + "\n";
+            } else {
+                inter_code += "lw, " + text + ", 0, T" +reg_num + "\n";
+                reg_num++;
+            }
         }
     }
 
     private void whilestatement(){
         output+="whilestatement -> WHILE condexpr whiletail\n";
         lookahead++;
-//        int temp = reg_num;
-        inter_code += ".label, 0, 0, LX\n";
+
+        label_num+=3;
+        int temp = label_num;
+
+        inter_code += ".label, 0, 0, L" + (temp-1) + "\n";
         condexpr();
+
         whiletail();
+        inter_code += "j, 0, 0, L" + (temp-1) + "\n";
+        inter_code += ".label, 0, 0, L" + (temp-3) + "\n";
     }
 
     private void whiletail(){
@@ -460,26 +505,34 @@ public class CodeGen {
     private void ifstatement(){
         output+="ifstatement -> IF condexpr compoundstatement istail\n";
         lookahead++;
-        inter_code += ".label, 0, 0, LX\n";
+        reg_num++;
+        label_num+=3;
+        int temp = label_num;
         condexpr();
+        inter_code += "j, 0, 0, L" + (temp-2) + "\n";
+        inter_code += "# Start if statement THEN part ---\n";
+        inter_code += ".label, 0, 0, L" + (temp-1) + "\n";
         compoundstatement();
-        istail();
-    }
 
+        istail();
+
+        inter_code += "j, 0, 0, L" + (temp-3) + "\n";
+        inter_code += ".label, 0, 0, L" + (temp-3) + "\n";
+
+    }
 
     private void istail() {
         String curr = tokenBuffer.get(lookahead).getTokenType().toString();
 
         if (curr.equals("ELSE")) {
             output += "istail -> ELSE compoundstatement\n";
+
+            inter_code += "# Start if statement ELSE part ---\n";
+            inter_code += ".label, 0, 0, L" + (label_num-2) + "\n";
             lookahead++;
-            inter_code += "Start if statement ELSE part ---\n";
-            inter_code += ".label, 0, 0, LX\n";
             compoundstatement();
         }
         else {
-//            inter_code += "Start if statement THEN part ---\n";
-//            inter_code += ".label, 0, 0, LX\n";
             output+="istail -> e\n";
         }
     }
@@ -508,65 +561,90 @@ public class CodeGen {
 
     private void condexprtail(){
         String curr = tokenBuffer.get(lookahead).getTokenType().toString();
+        String prev = tokenBuffer.get(lookahead-3).getTokenText().toLowerCase();
 
         if(curr.equals("LT")){
-            output+="condexprtail -> LT vorc\n";
-            lookahead++;
+           output+="condexprtail -> LT vorc\n";
+           lookahead++;
 
-            int temp = reg_num-1;
+            int temp = reg_num;
+            int label = label_num;
             vorc();
-            inter_code += "blt, T" + (temp) + ", T" + (temp+1) + ", LX\n";
+
+            if(prev.equals("while")){
+                inter_code += "blt, T" + (temp) + ", T" + (temp+1) + ", L" + (label_num-2) + "\n";
+                inter_code += "j, 0, 0, L" + (label_num-3) + "\n";
+                inter_code += ".label, 0, 0, L" + (label_num-2) + "\n";
+
+            } else {
+                inter_code += "blt, T" + (temp) + ", T" + (temp+1) + ", L" + (label_num-1) + "\n";
+            }
+
         }
         else if(curr.equals("GT")){
             output+="condexprtail -> GT vorc\n";
             lookahead++;
 
-            int temp = reg_num-1;
+            int temp = reg_num;
             vorc();
-            inter_code += "bgt, T" + (temp) + ", T" + (temp+1) + ", LX\n";
+
+            if(prev.equals("while")){
+                inter_code += "bgt, T" + (temp) + ", T" + (temp + 1) + ", L" + (label_num - 2) + "\n";
+                inter_code += "j, 0, 0, L" + (label_num-3) + "\n";
+                inter_code += ".label, 0, 0, L" + (label_num-2) + "\n";
+            } else {
+                inter_code += "bgt, T" + (temp) + ", T" + (temp + 1) + ", L" + (label_num - 1) + "\n";
+            }
         }
         else {
-            output+="condexprtail -> EQUAL vorc\n";
+            output+="condexprtail -> LT vorc\n";
             lookahead++;
-            int temp = reg_num-1;
-            vorc();
-            inter_code += "beq, T" + (temp) + ", T" + (temp+1) + ", LX\n";
-        }
-        inter_code += "j, 0, 0, LX\n";
-//        inter_code += ".label, 0, 0, LX\n";
 
+            int temp = reg_num;
+            vorc();
+
+            if(prev.equals("while")){
+                inter_code += "beq, T" + (temp) + ", T" + (temp+1) + ", L" + (label_num-2) + "\n";
+                inter_code += "j, 0, 0, L" + (label_num-3) + "\n";
+                inter_code += ".label, 0, 0, L" + (label_num-2) + "\n";
+            } else {
+                inter_code += "beq, T" + (temp) + ", T" + (temp+1) + ", L" + (label_num-1) + "\n";
+            }
+        }
+        reg_num++;
     }
 
     private void vorc(){
         String curr = tokenBuffer.get(lookahead).getTokenType().toString();
         String text = tokenBuffer.get(lookahead).getTokenText();
 
-        System.out.println(curr);
         if(curr.equals("ICONST")){
             output+="vorc -> ICONST\n";
             lookahead++;
 
-            inter_code += "li, " + text + ", 0, T" + reg_num + "\n";
+            inter_code += "li, " + text + ", 0, T" + (reg_num+1) + "\n";
             reg_num++;
         }
         else if(curr.equals("FCONST")){
             output+="vorc -> FCONST\n";
             lookahead++;
+
+            inter_code += "li, " + text + ", 0, FT" + (reg_num+1) + "\n";
+            reg_num++;
         }
         else {
-//            TODO
-            inter_code += "lw, " + text + ", 0, T" + reg_num + "\n";
-            reg_num++;
+            int temp = reg_num;
             output+="vorc -> variable\n";
-            variable(text, false);
+            variable("", false);
+
+            inter_code += "lw, " + text + ", 0, T" + temp + "\n";
         }
     }
 
-//    TODO
     private void readstatement(){
         output+="readstatement -> READ variable\n";
         lookahead++;
-        variable("Placeholder", false);
+        variable("", false);
     }
 
 }//CLASS BRACKET

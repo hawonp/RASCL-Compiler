@@ -29,6 +29,7 @@ arraydim -> LBRACKET arraydimtail
 arraydimtail -> ICONST RBACKET
 variablelisttail -> SEMICOLON
 decllist -> e
+
 bstatementlist -> LBRACE statementlist RBRACE
 statementlist -> statement SEMICOLON statementlist
 statement -> assignmentexpression
@@ -43,6 +44,7 @@ factor -> MINUS factor
 factor -> ICONST
 termtail -> e
 otherexpressiontail -> e
+
 statementlist -> statement SEMICOLON statementlist
 statement -> assignmentexpression
 assignmentexpression -> variable ASSIGN otherexpression

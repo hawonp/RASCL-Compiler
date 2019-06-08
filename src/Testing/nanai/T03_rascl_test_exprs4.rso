@@ -1,0 +1,63 @@
+
+
+.segment, 0, 0, .data
+.int, 0, 5, arr
+.int, 0, 1, a
+.int, 0, 1, b
+.float, 0, 1, c
+.float, 0, 1, d
+
+
+.segment, 0, 0, .text
+# Start ASSIGN statement ---
+li, 0, 0, T0
+la, arr, 0, T1
+add, T0, T1, T2
+li, 6, 0, T4
+li, 0, 0, T5
+sub, T5, T4, T6
+sw, T6, 0, T2
+# Start ASSIGN statement ---
+li, 4, 0, T7
+la, arr, 0, T8
+add, T7, T8, T9
+li, 5, 0, T11
+li, 0, 0, T12
+sub, T12, T11, T13
+sw, T13, 0, T9
+# Start ASSIGN statement ---
+li, 8, 0, T14
+la, arr, 0, T15
+add, T14, T15, T16
+li, 4, 0, T18
+li, 0, 0, T19
+sub, T19, T18, T20
+sw, T20, 0, T16
+# Start ASSIGN statement ---
+li, 12, 0, T21
+la, arr, 0, T22
+add, T21, T22, T23
+li, 3, 0, T25
+li, 0, 0, T26
+sub, T26, T25, T27
+sw, T27, 0, T23
+# Start ASSIGN statement ---
+li, 16, 0, T28
+la, arr, 0, T29
+add, T28, T29, T30
+li, 2, 0, T32
+li, 0, 0, T33
+sub, T33, T32, T34
+sw, T34, 0, T30
+# Start ASSIGN statement ---
+li, 3, 0, T35
+sw, T35, 0, a
+# Start ASSIGN statement ---
+lw, a, 0, T36
+li, 2, 0, T37
+lw, b, 0, T38
+mul, T37, T38, T39
+add, T36, T39, T40
+lw, a, 0, T41
+add, T40, T41, T42
+sw, T42, 0, b

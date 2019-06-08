@@ -14,9 +14,5 @@ sw, T0, 0, a
 # Start ASSIGN statement ---
 lw, a, 0, T1
 li, 2, 0, T2
-lw, b, 0, T3
-lw, a, 0, T4
-add, T3, T4, T5
-mul, T2, T5, T6
-add, T1, T6, T7
-sw, T7, 0, b
+add, T1, T2, T3
+sw, T3, 0, b

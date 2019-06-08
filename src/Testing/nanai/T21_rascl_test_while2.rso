@@ -1,0 +1,39 @@
+
+
+.segment, 0, 0, .data
+.float, 0, 1, a
+.int, 0, 1, b
+.int, 0, 1, c
+.int, 0, 5, d
+
+
+.segment, 0, 0, .text
+# Start ASSIGN statement ---
+li, 5, 0, T0
+toFloat, T0, 0, FT0
+sw, T0, 0, a
+# Start WHILE statement ---
+.label, 0, 0, L2
+lw, b, 0, T1
+li, 5, 0, T2
+blt, T1, T2, L1
+j, 0, 0, L0
+.label, 0, 0, L1
+# Start ASSIGN statement ---
+lw, a, 0, FT1
+lw, b, 0, T3
+toFloat, T3, 0, FT3
+fmul, FT1, FT3, FT2
+sw, FT2, 0, c
+# Start ASSIGN statement ---
+lw, b, 0, T4
+li, 1, 0, T5
+add, T4, T5, T6
+sw, T6, 0, b
+j, 0, 0, L2
+.label, 0, 0, L0
+# Start ASSIGN statement ---
+lw, c, 0, T7
+li, 1, 0, T8
+sub, T7, T8, T9
+sw, T9, 0, c

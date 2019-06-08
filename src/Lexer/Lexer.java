@@ -168,7 +168,7 @@ public class Lexer {
 
     //parse the buffer by repeatedly calling getNextToken() till end of file is reached
     public void buildBuffer(){
-        System.out.println("\t\t(Lexer) building token buffer with getNextToken()");
+//        System.out.println("\t\t(Lexer) building token buffer with getNextToken()");
 
         //process buffer and add discovered token to result list
         while(!buffer.isEmpty()){

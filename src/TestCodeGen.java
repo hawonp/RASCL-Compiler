@@ -9,14 +9,15 @@ public class TestCodeGen {
 //        System.out.println("Command Line Arguement is: " + inputFile);
         String path = "C:\\Users\\hawon\\IdeaProjects\\CodeGeneration\\src\\Testing\\basic_rascl_tests";
 
-        String inputFile = path + "\\T00_rascl_test_exprs1.rsc";
+        String inputFile = path + "\\T30_rascl_test_arrays1.rsc";
 
         //try to generate code output
-        System.out.println("\nSTART CODE GENERATION: " + inputFile);
+        System.out.println("\nSTART CODE GENERATION: " + inputFile + "\n");
         try {
-            CodeGen c = new CodeGen(inputFile);
+            CodeGeneration c = new CodeGeneration(inputFile);
+//            CodeGen c = new CodeGen(inputFile);
         } catch (IOException e) {
-            System.out.println("Could not find fuke!");
+            System.out.println("Could not find file!");
             e.printStackTrace();
         }
 

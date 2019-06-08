@@ -10,7 +10,7 @@ public class Attribute {
 
     //possible types of the attribute
     public enum typeField{
-        INT, FLOAT, ARRAY;
+        INT, FLOAT, INT_ARRAY, FLOAT_ARRAY;
     }
 
     //instance variables
@@ -28,6 +28,18 @@ public class Attribute {
     public Attribute(String a, typeField t){
         this.attributeType = a;
         this.type = t;
+    }
+
+    public typeField getType(){
+        return this.type;
+    }
+
+    public boolean isFloat(){
+        return type.toString().equals("FLOAT");
+    }
+
+    public boolean isFloatArr(){
+        return type.toString().equals("FLOAT_ARRAY");
     }
 
     @Override

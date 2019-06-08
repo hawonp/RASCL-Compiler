@@ -30,9 +30,18 @@ public class SymbolInfo {
 
     //helper method to print the list of attributes
     public void printAttributes(){
+        System.out.println(identifier);
         for(Attribute a : attributes){
            System.out.println("\t" + a.toString());
         }
+    }
+
+    public boolean isFloat(){
+        for(Attribute a : attributes){
+            if(a.isFloat() || a.isFloatArr())
+                return true;
+        }
+        return false;
     }
 
     //helper method that adds an attribute and its value
@@ -51,9 +60,13 @@ public class SymbolInfo {
                 attributes.add(new Attribute("type", Attribute.typeField.INT));
                 return true;
             }
-            //add a new array
-            else if(value.toUpperCase().equals(Attribute.typeField.ARRAY.toString())){
-                attributes.add(new Attribute("type", Attribute.typeField.ARRAY));
+            //add a new float array
+            else if(value.toUpperCase().equals(Attribute.typeField.FLOAT_ARRAY.toString())){
+                attributes.add(new Attribute("type", Attribute.typeField.FLOAT_ARRAY));
+                return true;
+            }
+            else if(value.toUpperCase().equals(Attribute.typeField.INT_ARRAY.toString())){
+                attributes.add(new Attribute("type", Attribute.typeField.INT_ARRAY));
                 return true;
             }
             //add a new float

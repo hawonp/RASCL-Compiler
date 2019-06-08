@@ -4,7 +4,6 @@ package Table;/*
 
         SymbolTable tracks symbols and allows for quick and easy access
  */
-import Table.SymbolInfo;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,13 +18,13 @@ public class SymbolTable {
 
     //initialize symbol by declaring the HashMap
     public void initSymTab(){
-        map = new HashMap<String, SymbolInfo>();
+        map = new HashMap<>();
     }
 
     //add a unique symbol to the table
     public boolean addSymbol(String s){
         //add a symbol to the table, if it is unique
-        if(!map.containsKey(s)){
+        if(!map.containsKey(s) && !s.equals("")){
             map.put(s, new SymbolInfo(s));
             return true;
         }
@@ -43,6 +42,38 @@ public class SymbolTable {
         //could not add attribute to symbol as symbol does not exist
         return false;
     }
+
+    public boolean addFloatArr(String identifier){
+        if (map.containsKey(identifier)) {
+            SymbolInfo si = map.get(identifier);
+            return si.addAttribute(2,"FLOAT_ARRAY");
+        }
+        return false;
+    }
+
+    public boolean addIntArr(String identifier){
+        if (map.containsKey(identifier)) {
+            SymbolInfo si = map.get(identifier);
+            return si.addAttribute(2,"INT_ARRAY");
+        }
+        return false;
+    }
+
+    public void printST(){
+       System.out.println(map.toString());
+       for(SymbolInfo x : map.values()){
+           x.printAttributes();
+       }
+    }
+
+    public boolean isFloat(String identifier){
+        if(map.containsKey(identifier)){
+            SymbolInfo si = map.get(identifier);
+            return si.isFloat();
+        }
+        return false;
+    }
+
 
     //helper method that checks if a symbol is in the symbol table
     public boolean symbolInTable(String identifer){
