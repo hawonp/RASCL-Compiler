@@ -9,7 +9,7 @@ public class TestCodeGen {
 //        System.out.println("Command Line Arguement is: " + inputFile);
         String path = "C:\\Users\\hawon\\IdeaProjects\\CodeGeneration\\src\\Testing\\basic_rascl_tests";
 
-        String inputFile = path + "\\T30_rascl_test_arrays1.rsc";
+        String inputFile = path + "\\T31_rascl_test_arrays2.rsc";
 
         //try to generate code output
         System.out.println("\nSTART CODE GENERATION: " + inputFile + "\n");

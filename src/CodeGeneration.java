@@ -242,8 +242,11 @@ public class CodeGeneration {
             output+="arraydimtail -> ID RBRACKET\n";
 
             inter_code += "lw, " + text + ", 0, T" + (reg_num) + "\n";
-            inter_code += "sl, T" + reg_num + ", 2, T" + (reg_num++) + "\n";
-            inter_code += "la, arr, 0, T" + (reg_num++) + "\n";
+            reg_num++;
+            inter_code += "sl, T" + reg_num + ", 2, T" + (reg_num) + "\n";
+            reg_num++;
+            inter_code += "la, arr, 0, T" + (reg_num) + "\n";
+            reg_num++;
             inter_code += "add, T" + (reg_num-2) + ", T" + (reg_num-1) + ", T" + (reg_num) + "\n";
             reg_num++;
 
@@ -260,11 +263,12 @@ public class CodeGeneration {
             else {
                 String temp = tokenBuffer.get(lookahead-2).getTokenText();
                 int x = Integer.parseInt(tokenBuffer.get(lookahead).getTokenText());
-                inter_code += "li, " + (x *4) + ", 0, T" + (reg_num++) + "\n";
-                inter_code += "la, " + temp + ", 0, T" + (reg_num++) + "\n";
+                inter_code += "li, " + (x *4) + ", 0, T" + (reg_num) + "\n";
+                reg_num++;
+                inter_code += "la, " + temp + ", 0, T" + (reg_num) + "\n";
+                reg_num++;
                 inter_code += "add, T" + (reg_num-2) + ", T" + (reg_num-1) + ", T" + (reg_num) + "\n";
                 reg_num++;
-
             }
         }
         lookahead+=2;
@@ -315,21 +319,24 @@ public class CodeGeneration {
         output+="assignmentexpression -> variable ASSIGN otherexpression\n";
         variable("", false);
         lookahead++;
-        otherexpression();
+
+        if(st.isFloat(text)){
+            otherexpression("float");
+        } else {
+            otherexpression("");
+        }
+
+        int tempFloat = float_num;
 
         if(isarray){
             if(st.isFloat(text)){
-//                inter_code += "toFloat, T" + (reg_num-1) + ", 0, FT" + (float_num) + "\n";
-                inter_code += "sw, " + "FT" + float_num + ", 0, T" + (tempReg+2) + "\n";
-//                float_num++;
+                inter_code += "sw, " + "FT" + (tempFloat-1)+ ", 0, T" + (tempReg+2) + "\n";
             } else {
                 inter_code += "sw, " + "T" + (reg_num - 1) + ", 0, T" + (tempReg+2) + "\n";
             }
         } else {
             if(st.isFloat(text)){
-//                inter_code += "toFloat, T" + (reg_num-1) + ", 0, FT" + (float_num) + "\n";
-                inter_code += "sw, " + "FT" + (float_num) + ", 0, " + text + "\n";
-//                float_num++;
+                inter_code += "sw, " + "FT" + (tempFloat-1) + ", 0, " + text + "\n";
             } else {
                 inter_code += "sw, " + "T" + (reg_num - 1) + ", 0, " + text + "\n";
             }
@@ -355,71 +362,129 @@ public class CodeGeneration {
         }
     }
 
-    private void otherexpression(){
+    private void otherexpression(String type){
         output+="otherexpression -> term otherexpressiontail\n";
-        term();
-        otherexpressiontail();
+        term(type);
+        otherexpressiontail(type);
     }
 
-    private void otherexpressiontail(){
+    private void otherexpressiontail(String type){
         String curr = tokenBuffer.get(lookahead).getTokenType().toString();
+        String next = tokenBuffer.get(lookahead+1).getTokenText();
+        String nextType = tokenBuffer.get(lookahead+1).getTokenType().toString();
 
         if(curr.equals("PLUS")){
             output+="otherexpressiontail -> PLUS term otherexpressiontail\n";
             lookahead++;
 
             int temp = reg_num - 1;
-            term();
-            inter_code += "add, T" + temp + ", T" + (reg_num-1) + ", T" + (reg_num++) + "\n";
+            int tempFloat = float_num;
+            term(type);
 
-            otherexpressiontail();
+            //result should be a float
+            if(type.toLowerCase().equals("float")){
+                //move integer to float before doing float operation
+                if(nextType.toLowerCase().equals("iconst")) {
+                    inter_code += "toFloat, T" + temp + ", 0, FT" + (tempFloat) + "\n";
+                    float_num++;
+                }
+                inter_code += "fadd, FT" + (tempFloat-1) + ", FT" + (tempFloat) + ", FT" + (tempFloat+1) + "\n";
+                float_num++;
+            } else {
+                inter_code += "add, T" + temp + ", T" + (reg_num-1) + ", T" + (reg_num++) + "\n";
+            }
+
+            otherexpressiontail(type);
         } else if(curr.equals("MINUS")){
             output+="otherexpressiontail -> MINUS term otherexpressiontail\n";
             lookahead++;
 
             int temp = reg_num - 1;
-            term();
-            inter_code += "sub, T" + temp + ", T" + (reg_num-1) + ", T" + (reg_num++) + "\n";
+            int tempFloat = float_num;
+            term(type);
 
-            otherexpressiontail();
+            //result should be a float
+            if(type.toLowerCase().equals("float")){
+                //move integer to float before doing float operation
+                if(nextType.toLowerCase().equals("iconst")) {
+                    inter_code += "toFloat, T" + temp + ", 0, FT" + (tempFloat) + "\n";
+                    float_num++;
+                }
+                inter_code += "fsub, FT" + (tempFloat-1) + ", FT" + (tempFloat) + ", FT" + (tempFloat+1) + "\n";
+                float_num++;
+            } else {
+                inter_code += "sub, T" + temp + ", T" + (reg_num-1) + ", T" + (reg_num++) + "\n";
+            }
+
+            otherexpressiontail(type);
         }
         else {
             output+="otherexpressiontail -> e\n";
         }
     }
 
-    private void term(){
+    private void term(String type){
         output+="term -> factor termtail\n";
-        factor();
-        termtail();
+        factor(type);
+        termtail(type);
     }
 
-    private void termtail(){
+    private void termtail(String type){
         String curr = tokenBuffer.get(lookahead).getTokenType().toString();
+        String next = tokenBuffer.get(lookahead+1).getTokenText();
+        String nextType = tokenBuffer.get(lookahead+1).getTokenType().toString();
 
         if(curr.equals("MULT")){
             output+="termtail -> MULT factor termtail\n";
             lookahead++;
 
             int temp = reg_num -1;
-            factor();
-            inter_code += "mul, T" + temp + ", T" + (reg_num-1) + ", T" + (reg_num++) + "\n";
-            termtail();
+            int tempFloat = float_num;
+            factor(type);
+
+            //result should be a float
+            if(type.toLowerCase().equals("float")){
+                //move integer to float before doing float operation
+                if(nextType.toLowerCase().equals("iconst")) {
+                    inter_code += "toFloat, T" + temp + ", 0, FT" + (tempFloat) + "\n";
+                    float_num++;
+                }
+                inter_code += "fmul, FT" + (tempFloat-1) + ", FT" + (tempFloat) + ", FT" + (tempFloat+1) + "\n";
+                float_num++;
+            } else {
+                inter_code += "mul, T" + temp + ", T" + (reg_num-1) + ", T" + (reg_num++) + "\n";
+            }
+
+            termtail(type);
         } else if(curr.equals("DIV")){
             output+="termtail -> DIV factor termtail\n";
             lookahead++;
 
             int temp = reg_num -1;
-            factor();
-            inter_code += "div, T" + temp + ", T" + (reg_num-1) + ", T" + (reg_num++) + "\n";
-            termtail();
+            int tempFloat = float_num;
+            factor(type);
+
+            //result should be a float
+            if(type.toLowerCase().equals("float")){
+                //move integer to float before doing float operation
+                if(nextType.toLowerCase().equals("iconst")) {
+                    inter_code += "toFloat, T" + temp + ", 0, FT" + (tempFloat) + "\n";
+                    float_num++;
+                }
+                inter_code += "fdiv, FT" + (tempFloat-1) + ", FT" + (tempFloat) + ", FT" + (tempFloat+1) + "\n";
+                float_num++;
+            } else {
+                inter_code += "div, T" + temp + ", T" + (reg_num-1) + ", T" + (reg_num++) + "\n";
+            }
+
+            termtail(type);
         }
         else {
             output+="termtail -> e\n";
         }
     }
 
-    private void factor(){
+    private void factor(String type){
         String curr = tokenBuffer.get(lookahead).getTokenType().toString();
         String text = tokenBuffer.get(lookahead).getTokenText();
 
@@ -439,20 +504,20 @@ public class CodeGeneration {
             output+="factor -> FCONST\n";
             lookahead++;
 
-            inter_code += "li, " + text + ", 0, FT" +reg_num + "\n";
-            reg_num++;
+            inter_code += "li, " + text + ", 0, FT" +float_num + "\n";
+            float_num++;
         }
         else if(curr.equals("LPAREN")){
             //todo unsure about this shit
             output+="factor -> LPAREN otherexpression RPAREN\n";
             lookahead++;
-            otherexpression();
+            otherexpression(type);
             lookahead++;
         }
         else if(curr.equals("MINUS")){
             output+="factor -> MINUS factor\n";
             lookahead++;
-            factor();
+            factor(type);
 
             inter_code += "li, 0, 0, T" +reg_num + "\n";
             inter_code += "sub, T" + reg_num + ", T" + (reg_num-1) + ", T" + (reg_num+1) + "\n";
@@ -467,10 +532,25 @@ public class CodeGeneration {
             String prev = tokenBuffer.get(lookahead-1).getTokenText();
 
             if(prev.equals("]")){
-                inter_code += "lw, T" + (reg_num-2) + ", 0, T" + (reg_num-1) + "\n";
+                if(st.isFloat(text)){
+                    inter_code += "lw, T" + (reg_num-2) + ", 0, FT" + (float_num) + "\n";
+                    float_num++;
+                } else {
+                    //if op is float, and one of the operands are int
+                    inter_code += "lw, T" + (reg_num-2) + ", 0, T" + (reg_num-1) + "\n";
+                    if(type.equals("float") && !st.isFloat(text)){
+                        inter_code += "toFloat, T" + (reg_num-2) + ", 0, FT" + (float_num) + "\n";
+                        float_num++;
+                    }
+                }
             } else {
-                inter_code += "lw, " + text + ", 0, T" +reg_num + "\n";
-                reg_num++;
+                if(st.isFloat(text)){
+                    inter_code += "lw, " + text + ", 0, FT" +float_num+ "\n";
+                    float_num++;
+                } else {
+                    inter_code += "lw, " + text + ", 0, T" +reg_num + "\n";
+                    reg_num++;
+                }
             }
         }
     }
@@ -511,8 +591,11 @@ public class CodeGeneration {
         condexpr();
         inter_code += "j, 0, 0, L" + (temp-2) + "\n";
         inter_code += "# Start if statement THEN part ---\n";
-        inter_code += ".label, 0, 0, L" + (temp-1) + "\n";
+        inter_code += ".j, 0, 0, L" + (temp-1) + "\n";
         compoundstatement();
+
+        inter_code += "# Start if statement THEN part ---\n";
+        inter_code += ".label, 0, 0, L" + (temp-2) + "\n";
 
         istail();
 
@@ -526,9 +609,6 @@ public class CodeGeneration {
 
         if (curr.equals("ELSE")) {
             output += "istail -> ELSE compoundstatement\n";
-
-            inter_code += "# Start if statement ELSE part ---\n";
-            inter_code += ".label, 0, 0, L" + (label_num-2) + "\n";
             lookahead++;
             compoundstatement();
         }
@@ -629,8 +709,8 @@ public class CodeGeneration {
             output+="vorc -> FCONST\n";
             lookahead++;
 
-            inter_code += "li, " + text + ", 0, FT" + (reg_num+1) + "\n";
-            reg_num++;
+            inter_code += "li, " + text + ", 0, FT" + (float_num) + "\n";
+            float_num++;
         }
         else {
             int temp = reg_num;
