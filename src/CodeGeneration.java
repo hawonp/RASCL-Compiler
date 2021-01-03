@@ -1,12 +1,11 @@
 /*
     Author: Hawon Park
-    SBUID: 110983842
-    Email: hawon.park@stonybrook.edu
+    Email: hawon.prk@gmail.com
 
     This "Parser.java" file takes an input file and
         1) Generates a list of tokens using a lexical analyzer
         2) Parses through the token list
-        3) Prints out the production output into a file
+        3) Prints out the production (intermediate code) output into a file
 
     Parser will only parse RASCL files!
  */
