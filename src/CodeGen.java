@@ -1,3 +1,6 @@
+// Author:  Hawon park
+// Purpose: This file generates intermediate code based on provided RASCL code
+
 import Lexer.*;
 import Table.*;
 
